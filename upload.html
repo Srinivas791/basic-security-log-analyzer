@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Log Files{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">
+      <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="2" fill="none" color="var(--cyan-glow)">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="17 8 12 3 7 8"/>
+        <line x1="12" x2="12" y1="3" y2="15"/>
+      </svg>
+      Log File Reader & Parser
+    </h1>
+    <p class="page-description">Ingest authentication log streams (.txt, .csv) with resilient parsing of malformed and corrupted rows.</p>
+  </div>
+  <div style="display: flex; gap: 0.75rem;">
+    <button onclick="loadSampleLogs('txt')" class="btn btn-secondary btn-sm">Load sample_logs.txt</button>
+    <button onclick="loadSampleLogs('csv')" class="btn btn-secondary btn-sm">Load sample_logs.csv</button>
+  </div>
+</div>
+
+<!-- Upload Form Card -->
+<div class="cyber-card" style="margin-bottom: 2rem;">
+  <form id="uploadLogForm" action="/upload" method="POST" enctype="multipart/form-data">
+    <div class="dropzone-box" id="dropzoneBox" onclick="document.getElementById('logFileInput').click()">
+      <svg class="dropzone-icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" fill="none">
+        <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/>
+        <path d="M12 12v9"/>
+        <path d="m8 16 4-4 4 4"/>
+      </svg>
+      <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 0.5rem; color: #fff;">
+        Drag & Drop Authentication Logs Here
+      </h3>
+      <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+        Supports plain text (.txt) and CSV (.csv) logs. Syslog, Apache, Key-Value, and custom auth formats supported.
+      </p>
+      <input type="file" id="logFileInput" name="logfile" accept=".txt,.csv,.log" style="display: none;" onchange="handleFileSelected(this)">
+      <button type="button" class="btn btn-cyan btn-sm" onclick="event.stopPropagation(); document.getElementById('logFileInput').click()">
+        Browse Local Files
+      </button>
+      <div id="selectedFileName" style="margin-top: 1rem; font-family: monospace; color: var(--cyan-glow); font-size: 0.88rem;"></div>
+    </div>
+    
+    <div style="margin-top: 1.25rem; display: flex; justify-content: flex-end;">
+      <button type="submit" id="submitUploadBtn" class="btn btn-cyan" style="display: none;">
+        Process & Analyze Log File
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- Parser Summary Card -->
+<div class="stats-grid" style="margin-bottom: 2rem;">
+  <div class="stat-card">
+    <div class="stat-icon-wrapper stat-icon-cyan">
+      <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
+    </div>
+    <div class="stat-content">
+      <div class="stat-label">Ingested File</div>
+      <div class="stat-value" style="font-size: 1.15rem; font-family: monospace; word-break: break-all;">{{ current_filename }}</div>
+      <div class="stat-subtext">{{ summary.total_records }} Total Raw Rows</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon-wrapper stat-icon-green">
+      <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <div class="stat-content">
+      <div class="stat-label">Valid Records</div>
+      <div class="stat-value" style="color: #34d399;">{{ summary.valid_records_count }}</div>
+      <div class="stat-subtext">Successfully parsed into structured schema</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon-wrapper stat-icon-amber">
+      <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    </div>
+    <div class="stat-content">
+      <div class="stat-label">Invalid / Malformed</div>
+      <div class="stat-value" style="color: #fbbf24;">{{ summary.invalid_records_count }}</div>
+      <div class="stat-subtext">Isolated cleanly without crashing system</div>
+    </div>
+  </div>
+</div>
+
+<!-- Tabs for Valid vs Invalid Records (Prompt requirement: Display valid and invalid records separately) -->
+<div class="cyber-card">
+  <div style="display: flex; gap: 1rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 1rem; margin-bottom: 1.5rem;">
+    <button class="btn btn-secondary btn-sm" id="tabBtnValid" onclick="switchTab('valid')" style="background: rgba(6, 182, 212, 0.15); border-color: var(--cyan-primary); color: #fff;">
+      Valid Records ({{ summary.valid_records_count }})
+    </button>
+    <button class="btn btn-secondary btn-sm" id="tabBtnInvalid" onclick="switchTab('invalid')">
+      Invalid / Malformed Records ({{ summary.invalid_records_count }})
+    </button>
+  </div>
+
+  <!-- Tab 1: Valid Records Table -->
+  <div id="tabContentValid" class="table-responsive">
+    <table class="cyber-table">
+      <thead>
+        <tr>
+          <th>Line</th>
+          <th>Extracted Timestamp</th>
+          <th>Username</th>
+          <th>Login Status</th>
+          <th>Source IP</th>
+          <th>Service</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in valid_records %}
+        <tr>
+          <td class="code-font" style="color: var(--text-dim);">L{{ r.line_number }}</td>
+          <td class="code-font">{{ r.timestamp_str }}</td>
+          <td style="font-weight: 600; color: #fff;">{{ r.username }}</td>
+          <td>
+            {% if r.status == 'SUCCESS' %}
+              <span class="badge badge-success">SUCCESS</span>
+            {% else %}
+              <span class="badge badge-danger">FAILED</span>
+            {% endif %}
+          </td>
+          <td class="code-font">{{ r.source_ip }}</td>
+          <td><span class="badge badge-gray">{{ r.service }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Tab 2: Invalid / Malformed Records Table -->
+  <div id="tabContentInvalid" class="table-responsive" style="display: none;">
+    <div style="margin-bottom: 1rem; padding: 0.75rem 1rem; background: rgba(245, 158, 11, 0.08); border-left: 3px solid var(--amber-warning); border-radius: var(--radius-sm); font-size: 0.85rem; color: #fde68a;">
+      The records below failed parsing validation (blank rows, comments, missing timestamps, corrupted status, unparseable IP).
+      They have been separated to protect analysis integrity while providing diagnostic visibility.
+    </div>
+
+    {% if invalid_records %}
+    <table class="cyber-table">
+      <thead>
+        <tr>
+          <th>Line #</th>
+          <th>Diagnostic Error Reason</th>
+          <th>Raw Unparseable Content</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for inv in invalid_records %}
+        <tr>
+          <td class="code-font" style="color: #fbbf24; font-weight: 700;">L{{ inv.line_number }}</td>
+          <td>
+            <span class="badge badge-warning">{{ inv.reason }}</span>
+          </td>
+          <td class="code-font" style="color: #cbd5e1; word-break: break-all;">
+            {{ inv.raw if inv.raw.strip() else '<em>[Blank Line]</em>' }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div style="text-align: center; padding: 2rem; color: var(--text-muted);">
+      No invalid or malformed records found in this dataset. 100% clean log formatting.
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function handleFileSelected(input) {
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+      document.getElementById('selectedFileName').innerText = `Selected File: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+      document.getElementById('submitUploadBtn').style.display = 'inline-flex';
+      showToast(`Selected: ${file.name}. Ready to process.`, 'info');
+    }
+  }
+
+  function switchTab(tab) {
+    const validTab = document.getElementById('tabContentValid');
+    const invalidTab = document.getElementById('tabContentInvalid');
+    const btnValid = document.getElementById('tabBtnValid');
+    const btnInvalid = document.getElementById('tabBtnInvalid');
+
+    if (tab === 'valid') {
+      validTab.style.display = 'block';
+      invalidTab.style.display = 'none';
+      btnValid.style.background = 'rgba(6, 182, 212, 0.15)';
+      btnValid.style.borderColor = 'var(--cyan-primary)';
+      btnValid.style.color = '#fff';
+      btnInvalid.style.background = '';
+      btnInvalid.style.borderColor = '';
+      btnInvalid.style.color = '';
+    } else {
+      validTab.style.display = 'none';
+      invalidTab.style.display = 'block';
+      btnInvalid.style.background = 'rgba(245, 158, 11, 0.15)';
+      btnInvalid.style.borderColor = 'var(--amber-warning)';
+      btnInvalid.style.color = '#fff';
+      btnValid.style.background = '';
+      btnValid.style.borderColor = '';
+      btnValid.style.color = '';
+    }
+  }
+
+  // Setup Drag and Drop
+  const dropzone = document.getElementById('dropzoneBox');
+  if (dropzone) {
+    ['dragenter', 'dragover'].forEach(name => {
+      dropzone.addEventListener(name, (e) => {
+        e.preventDefault();
+        dropzone.classList.add('dragover');
+      }, false);
+    });
+
+    ['dragleave', 'drop'].forEach(name => {
+      dropzone.addEventListener(name, (e) => {
+        e.preventDefault();
+        dropzone.classList.remove('dragover');
+      }, false);
+    });
+
+    dropzone.addEventListener('drop', (e) => {
+      const dt = e.dataTransfer;
+      const files = dt.files;
+      if (files.length > 0) {
+        document.getElementById('logFileInput').files = files;
+        handleFileSelected(document.getElementById('logFileInput'));
+      }
+    }, false);
+  }
+</script>
+{% endblock %}

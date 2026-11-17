@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">
+      <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="2" fill="none" color="var(--cyan-glow)">
+        <rect width="7" height="9" x="3" y="3" rx="1"/>
+        <rect width="7" height="5" x="14" y="3" rx="1"/>
+        <rect width="7" height="9" x="14" y="12" rx="1"/>
+        <rect width="7" height="5" x="3" y="16" rx="1"/>
+      </svg>
+      Security Operations Dashboard
+    </h1>
+    <p class="page-description">Real-time defensive surveillance of authentication logs, suspicious failures, and attack patterns.</p>
+  </div>
+  <div>
+    <a href="/reports" class="btn btn-secondary btn-sm">
+      <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/>
+        <line x1="12" x2="12" y1="15" y2="3"/>
+      </svg>
+      Generate Audit Report
+    </a>
+  </div>
+</div>
+
+<!-- Risk Assessment Banner -->
+<div class="cyber-card" style="margin-bottom: 2rem; border-left: 4px solid {% if threat.level == 'CRITICAL' %}var(--red-danger){% elif threat.level == 'HIGH' %}var(--amber-warning){% elif threat.level == 'MEDIUM' %}var(--blue-info){% else %}var(--green-success){% endif %};">
+  <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1.5rem;">
+    <div style="display: flex; align-items: center; gap: 1.5rem;">
+      <div class="risk-score-circle {% if threat.level == 'CRITICAL' %}risk-circle-critical{% elif threat.level == 'HIGH' %}risk-circle-high{% elif threat.level == 'MEDIUM' %}risk-circle-medium{% else %}risk-circle-low{% endif %}">
+        <span style="font-size: 1.9rem; line-height: 1;">{{ threat.score }}</span>
+        <span style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em;">Risk Index</span>
+      </div>
+      <div>
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <h2 style="font-size: 1.25rem; font-weight: 700; color: #fff;">Defensive Threat Posture:</h2>
+          <span class="badge {% if threat.level == 'CRITICAL' %}badge-danger{% elif threat.level == 'HIGH' %}badge-warning{% elif threat.level == 'MEDIUM' %}badge-info{% else %}badge-success{% endif %}" style="font-size: 0.85rem;">
+            {{ threat.level }}
+          </span>
+        </div>
+        <p style="font-size: 0.88rem; color: var(--text-muted); margin-top: 0.35rem; max-width: 780px;">
+          {{ threat.assessment }}
+        </p>
+      </div>
+    </div>
+    <div style="display: flex; gap: 0.75rem;">
+      <a href="/failed-logins" class="btn btn-secondary btn-sm">Inspect Target Accounts</a>
+      <a href="/bursts" class="btn btn-secondary btn-sm">View Burst Timeline</a>
+    </div>
+  </div>
+</div>
+
+<!-- KPI Metric Cards Grid -->
+<div class="stats-grid">
+  <!-- Total Records -->
+  <div class="stat-card">
+    <div class="stat-icon-wrapper stat-icon-cyan">
+      <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+      </svg>
+    </div>
+    <div class="stat-content">
+      <div class="stat-label">Total Records</div>
+      <div class="stat-value">{{ summary.total_records }}</div>
+      <div class="stat-subtext">{{ summary.valid_records_count }} Valid | {{ summary.invalid_records_count }} Invalid</div>
+    </div>
+  </div>
+
+  <!-- Successful Logins -->
+  <div class="stat-card">
+    <div class="stat-icon-wrapper stat-icon-green">
+      <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+        <polyline points="22 4 12 14.01 9 11.01"/>
+      </svg>
+    </div>
+    <div class="stat-content">
+      <div class="stat-label">Successful Logins</div>
+      <div class="stat-value" style="color: #34d399;">{{ summary.successful_logins }}</div>
+      <div class="stat-subtext">Legitimate authentications</div>
+    </div>
+  </div>
+
+  <!-- Failed Logins -->
+  <div class="stat-card">
+    <div class="stat-icon-wrapper stat-icon-red">
+      <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="15" y1="9" x2="9" y2="15"/>
+        <line x1="9" y1="9" x2="15" y2="15"/>
+      </svg>
+    </div>
+    <div class="stat-content">
+      <div class="stat-label">Failed Logins</div>
+      <div class="stat-value" style="color: #f87171;">{{ summary.failed_logins }}</div>
+      <div class="stat-subtext">{{ summary.failure_rate_pct }}% Failure Ratio</div>
+    </div>
+  </div>
+
+  <!-- Affected Accounts -->
+  <div class="stat-card">
+    <div class="stat-icon-wrapper stat-icon-amber">
+      <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <line x1="19" y1="8" x2="19" y2="14"/>
+        <line x1="22" y1="11" x2="16" y2="11"/>
+      </svg>
+    </div>
+    <div class="stat-content">
+      <div class="stat-label">Affected Accounts</div>
+      <div class="stat-value">{{ summary.affected_accounts_count }}</div>
+      <div class="stat-subtext">{{ failed_data.flagged_accounts_count }} Exceeding Threshold</div>
+    </div>
+  </div>
+
+  <!-- Suspicious Alerts -->
+  <div class="stat-card">
+    <div class="stat-icon-wrapper stat-icon-purple">
+      <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none">
+        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+      </svg>
+    </div>
+    <div class="stat-content">
+      <div class="stat-label">Suspicious Alerts</div>
+      <div class="stat-value" style="color: #c084fc;">{{ alerts_count }}</div>
+      <div class="stat-subtext">{{ burst_data.total_burst_incidents }} Bursts | {{ failed_data.flagged_ips_count }} Bad IPs</div>
+    </div>
+  </div>
+</div>
+
+<!-- Interactive Charts (2x2 Grid) -->
+<div class="charts-grid-2col">
+  <!-- Chart 1: Outcome Doughnut -->
+  <div class="cyber-card">
+    <div class="card-header-row">
+      <h3 class="card-title">
+        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" color="var(--cyan-glow)"><circle cx="12" cy="12" r="10"/></svg>
+        Authentication Outcomes
+      </h3>
+      <span class="badge badge-info">Breakdown</span>
+    </div>
+    <div class="chart-container">
+      <canvas id="outcomeChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Chart 2: Timeline Activity -->
+  <div class="cyber-card">
+    <div class="card-header-row">
+      <h3 class="card-title">
+        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" color="var(--cyan-glow)"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Authentication Velocity Timeline
+      </h3>
+      <span class="badge badge-purple">Time Buckets</span>
+    </div>
+    <div class="chart-container">
+      <canvas id="timelineChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Chart 3: Top Attacked Accounts -->
+  <div class="cyber-card">
+    <div class="card-header-row">
+      <h3 class="card-title">
+        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" color="var(--red-danger)"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Top Targeted Accounts
+      </h3>
+      <a href="/failed-logins" class="btn btn-secondary btn-sm">Full User Analysis</a>
+    </div>
+    <div class="chart-container">
+      <canvas id="topUsersChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Chart 4: Top Malicious IPs -->
+  <div class="cyber-card">
+    <div class="card-header-row">
+      <h3 class="card-title">
+        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" color="var(--cyan-glow)"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        Top Suspicious Source IPs
+      </h3>
+      <a href="/failed-logins" class="btn btn-secondary btn-sm">Full IP Analysis</a>
+    </div>
+    <div class="chart-container">
+      <canvas id="topIpsChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- Recent Authentication Activity Table -->
+<div class="cyber-card">
+  <div class="card-header-row">
+    <div>
+      <h3 class="card-title">
+        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" color="var(--cyan-glow)"><line x1="12" x2="12" y1="2" y2="6"/><line x1="12" x2="12" y1="18" y2="22"/><line x1="4.93" x2="7.76" y1="4.93" y2="7.76"/><line x1="16.24" x2="19.07" y1="16.24" y2="19.07"/><line x1="2" x2="6" y1="12" y2="12"/><line x1="18" x2="22" y1="12" y2="12"/><line x1="4.93" x2="7.76" y1="19.07" y2="16.24"/><line x1="16.24" x2="19.07" y1="7.76" y2="4.93"/></svg>
+        Recent Authentication Stream
+      </h3>
+      <p style="font-size: 0.82rem; color: var(--text-dim); margin-top: 0.2rem;">Showing latest 10 parsed log records</p>
+    </div>
+    <a href="/logs" class="btn btn-secondary btn-sm">View All {{ summary.valid_records_count }} Records</a>
+  </div>
+
+  <div class="table-responsive">
+    <table class="cyber-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Timestamp</th>
+          <th>Username</th>
+          <th>Status</th>
+          <th>Source IP</th>
+          <th>Service</th>
+          <th>Raw Log Extract</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in recent_records %}
+        <tr>
+          <td class="code-font" style="color: var(--text-dim);">{{ r.id }}</td>
+          <td class="code-font">{{ r.timestamp_str }}</td>
+          <td>
+            <span style="font-weight: 600; color: #fff;">{{ r.username }}</span>
+          </td>
+          <td>
+            {% if r.status == 'SUCCESS' %}
+              <span class="badge badge-success">SUCCESS</span>
+            {% else %}
+              <span class="badge badge-danger">FAILED</span>
+            {% endif %}
+          </td>
+          <td class="code-font">{{ r.source_ip }}</td>
+          <td><span class="badge badge-gray">{{ r.service }}</span></td>
+          <td class="code-font" style="color: var(--text-muted); max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+            {{ r.raw }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const chartPayload = {{ chart_payload | tojson }};
+    initDashboardCharts(chartPayload);
+  });
+</script>
+{% endblock %}

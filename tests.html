@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Testing Results{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">
+      <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="2" fill="none" color="var(--green-success)">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+        <polyline points="22 4 12 14.01 9 11.01"/>
+      </svg>
+      Automated Testing & Verification Suite
+    </h1>
+    <p class="page-description">Five comprehensive test cases verifying normal behavior, repeated failures, burst detection, malformed parsing, and window boundaries.</p>
+  </div>
+  <div>
+    <button id="runTestsBtn" onclick="runAutomatedTests()" class="btn btn-cyan btn-sm">
+      <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+        <polygon points="5 3 19 12 5 21 5 3"/>
+      </svg>
+      Run Test Suite
+    </button>
+  </div>
+</div>
+
+<!-- Test Suite Overall Summary Banner -->
+<div class="cyber-card" style="margin-bottom: 2rem;" id="testSummaryBox">
+  <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <span class="badge {% if test_suite.all_passed %}badge-success{% else %}badge-danger{% endif %}" style="font-size: 0.95rem; padding: 0.4rem 0.9rem;">
+        {% if test_suite.all_passed %}ALL TESTS PASSED (100%){% else %}TESTS FAILED{% endif %}
+      </span>
+      <span style="margin-left: 1rem; color: var(--text-muted); font-size: 0.88rem;">
+        Duration: <strong style="color: #fff;">{{ test_suite.total_duration_ms }} ms</strong> | Executed: {{ test_suite.executed_at }}
+      </span>
+    </div>
+    <div>
+      <span style="font-size: 1.1rem; font-weight: 700; color: #34d399;">{{ test_suite.passed_tests }} Passed</span>
+      <span style="color: var(--text-dim); margin: 0 0.5rem;">/</span>
+      <span style="font-size: 1.1rem; font-weight: 700; color: {% if test_suite.failed_tests > 0 %}#f87171{% else %}var(--text-muted){% endif %};">{{ test_suite.failed_tests }} Failed</span>
+    </div>
+  </div>
+</div>
+
+<!-- Test Cases Container -->
+<div id="testCasesContainer">
+  {% for t in test_suite.test_results %}
+  <div class="cyber-card" style="margin-bottom: 1.25rem; border-left: 4px solid {% if t.status == 'PASSED' %}var(--green-success){% else %}var(--red-danger){% endif %};">
+    <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 0.75rem;">
+      <div>
+        <span class="badge badge-info" style="margin-right: 0.5rem;">{{ t.id }}</span>
+        <span style="font-weight: 700; font-size: 1.05rem; color: #fff;">{{ t.name }}</span>
+        <span class="badge badge-gray" style="margin-left: 0.5rem;">{{ t.category }}</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <span style="font-size: 0.8rem; color: var(--text-dim); font-family: monospace;">{{ t.duration_ms }} ms</span>
+        <span class="badge {% if t.status == 'PASSED' %}badge-success{% else %}badge-danger{% endif %}">{{ t.status }}</span>
+      </div>
+    </div>
+    
+    <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 0.85rem;">{{ t.details }}</p>
+
+    <div style="background: rgba(0, 0, 0, 0.3); border-radius: var(--radius-sm); padding: 0.75rem 1rem; border: 1px solid var(--border-subtle);">
+      <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-dim); font-weight: 700; margin-bottom: 0.4rem;">
+        Verified Assertions ({{ t.assertions_checked }})
+      </div>
+      <ul style="list-style: none; padding-left: 0; display: flex; flex-direction: column; gap: 0.25rem;">
+        {% for a in t.assertions_details %}
+        <li style="font-size: 0.82rem; font-family: monospace; display: flex; align-items: center; gap: 0.5rem; color: {% if a.endswith('PASS') %}#a7f3d0{% else %}#fca5a5{% endif %};">
+          <span>{% if a.endswith('PASS') %}✔{% else %}✖{% endif %}</span>
+          <span>{{ a }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

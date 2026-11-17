@@ -1,0 +1,73 @@
+# ==============================================================================
+# FICTIONAL SECURITY AUTHENTICATION LOG DATASET
+# Domain: Cybersecurity / Defensive Security Analysis (BUILDERS Phase 2)
+# Notice: All IP addresses use RFC 5737 documentation ranges (192.0.2.0/24, 
+#         198.51.100.0/24, 203.0.113.0/24) or RFC 1918 private ranges.
+# ==============================================================================
+
+# Normal Morning Activity - Benign Logins
+2026-11-17 08:00:15 - USER: alice - STATUS: SUCCESS - IP: 192.168.1.10 - SERVICE: SSH
+2026-11-17 08:02:40 - USER: bob - STATUS: SUCCESS - IP: 192.168.1.15 - SERVICE: Web-Portal
+2026-11-17 08:05:12 - USER: charlie - STATUS: FAILED - IP: 192.168.1.25 - SERVICE: VPN
+2026-11-17 08:05:45 - USER: charlie - STATUS: SUCCESS - IP: 192.168.1.25 - SERVICE: VPN
+2026-11-17 08:10:00 - USER: david - STATUS: SUCCESS - IP: 10.0.0.12 - SERVICE: SSH
+2026-11-17 08:15:22 - USER: eva - STATUS: SUCCESS - IP: 172.16.0.40 - SERVICE: Web-Portal
+2026-11-17 08:22:11 - USER: frank - STATUS: SUCCESS - IP: 192.168.1.33 - SERVICE: Web-Portal
+
+# Incident 1: Repeated Failures / Targeted Brute Force on 'admin'
+2026-11-17 09:12:01 - USER: admin - STATUS: FAILED - IP: 198.51.100.23 - SERVICE: SSH
+2026-11-17 09:12:25 - USER: admin - STATUS: FAILED - IP: 198.51.100.23 - SERVICE: SSH
+2026-11-17 09:12:50 - USER: admin - STATUS: FAILED - IP: 198.51.100.23 - SERVICE: SSH
+2026-11-17 09:13:15 - USER: admin - STATUS: FAILED - IP: 198.51.100.23 - SERVICE: SSH
+2026-11-17 09:13:40 - USER: admin - STATUS: FAILED - IP: 198.51.100.23 - SERVICE: SSH
+2026-11-17 09:14:10 - USER: admin - STATUS: FAILED - IP: 198.51.100.23 - SERVICE: SSH
+
+# Normal User Activity Interspersed
+2026-11-17 09:30:14 - USER: grace - STATUS: SUCCESS - IP: 192.168.1.50 - SERVICE: Web-Portal
+2026-11-17 09:45:00 - USER: hector - STATUS: SUCCESS - IP: 10.0.0.88 - SERVICE: API
+
+# Incident 2: High-Severity Repeated Attack on 'root'
+2026-11-17 10:05:01 - USER: root - STATUS: FAILED - IP: 203.0.113.88 - SERVICE: SSH
+2026-11-17 10:05:22 - USER: root - STATUS: FAILED - IP: 203.0.113.88 - SERVICE: SSH
+2026-11-17 10:05:48 - USER: root - STATUS: FAILED - IP: 203.0.113.88 - SERVICE: SSH
+2026-11-17 10:06:12 - USER: root - STATUS: FAILED - IP: 203.0.113.88 - SERVICE: SSH
+2026-11-17 10:06:35 - USER: root - STATUS: FAILED - IP: 203.0.113.88 - SERVICE: SSH
+2026-11-17 10:07:00 - USER: root - STATUS: FAILED - IP: 203.0.113.88 - SERVICE: SSH
+2026-11-17 10:07:25 - USER: root - STATUS: FAILED - IP: 203.0.113.88 - SERVICE: SSH
+2026-11-17 10:07:55 - USER: root - STATUS: FAILED - IP: 203.0.113.88 - SERVICE: SSH
+
+# Malformed / Corrupted Test Records (Parser Resilience Testing)
+
+2026-11-17 11:00:00 - USER: dev_user - IP: 10.0.0.44
+FAILED login attempt for user test_bot without timestamp
+[INVALID_TIMESTAMP_CHARS] - USER: corrupted_account - STATUS: FAILED - IP: 192.0.2.1
+### CORRUPTED HARDWARE TRACE 0xDEADBEEF 0x00000000 UNKNOWN_DEVICE_BUS_ERROR ###
+2026-11-17 11:05:15 - STATUS: FAILED - IP: 198.51.100.99 - SERVICE: Web-Portal
+
+# Incident 3: Rapid High-Frequency Burst Attack (< 30 seconds)
+2026-11-17 11:30:02 - USER: api_gateway - STATUS: FAILED - IP: 203.0.113.195 - SERVICE: API
+2026-11-17 11:30:05 - USER: api_gateway - STATUS: FAILED - IP: 203.0.113.195 - SERVICE: API
+2026-11-17 11:30:08 - USER: api_gateway - STATUS: FAILED - IP: 203.0.113.195 - SERVICE: API
+2026-11-17 11:30:12 - USER: api_gateway - STATUS: FAILED - IP: 203.0.113.195 - SERVICE: API
+2026-11-17 11:30:16 - USER: api_gateway - STATUS: FAILED - IP: 203.0.113.195 - SERVICE: API
+2026-11-17 11:30:20 - USER: api_gateway - STATUS: FAILED - IP: 203.0.113.195 - SERVICE: API
+2026-11-17 11:30:24 - USER: api_gateway - STATUS: FAILED - IP: 203.0.113.195 - SERVICE: API
+2026-11-17 11:30:29 - USER: api_gateway - STATUS: FAILED - IP: 203.0.113.195 - SERVICE: API
+
+# Incident 4: Horizontal Credential Spraying Across Multiple Accounts
+2026-11-17 12:10:05 - USER: accounting - STATUS: FAILED - IP: 198.51.100.45 - SERVICE: Web-Portal
+2026-11-17 12:10:18 - USER: billing - STATUS: FAILED - IP: 198.51.100.45 - SERVICE: Web-Portal
+2026-11-17 12:10:30 - USER: hr_admin - STATUS: FAILED - IP: 198.51.100.45 - SERVICE: Web-Portal
+2026-11-17 12:10:44 - USER: operations - STATUS: FAILED - IP: 198.51.100.45 - SERVICE: Web-Portal
+2026-11-17 12:11:02 - USER: backup_svc - STATUS: FAILED - IP: 198.51.100.45 - SERVICE: Web-Portal
+2026-11-17 12:11:19 - USER: database_admin - STATUS: FAILED - IP: 198.51.100.45 - SERVICE: Web-Portal
+2026-11-17 12:11:35 - USER: guest - STATUS: FAILED - IP: 198.51.100.45 - SERVICE: Web-Portal
+2026-11-17 12:11:50 - USER: test - STATUS: FAILED - IP: 198.51.100.45 - SERVICE: Web-Portal
+
+# Normal Afternoon Activity & Boundaries
+2026-11-17 13:00:00 - USER: alice - STATUS: SUCCESS - IP: 192.168.1.10 - SERVICE: SSH
+2026-11-17 13:15:00 - USER: ian - STATUS: FAILED - IP: 192.168.1.75 - SERVICE: VPN
+2026-11-17 13:45:00 - USER: ian - STATUS: FAILED - IP: 192.168.1.75 - SERVICE: VPN
+2026-11-17 14:00:20 - USER: jessica - STATUS: SUCCESS - IP: 192.168.1.90 - SERVICE: Web-Portal
+2026-11-17 14:10:15 - USER: kevin - STATUS: SUCCESS - IP: 10.0.0.101 - SERVICE: Web-Portal
+2026-11-17 14:15:30 - USER: laura - STATUS: SUCCESS - IP: 172.16.0.55 - SERVICE: SSH

@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block title %}Failed Login Detection{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">
+      <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="2" fill="none" color="var(--red-danger)">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      Failed Login Detection & Repeated Failure Alerts
+    </h1>
+    <p class="page-description">Automated identification of unsuccessful logins, account targeted frequencies, and configurable threshold breach alerting.</p>
+  </div>
+</div>
+
+<!-- Threshold Configuration Bar -->
+<div class="cyber-card" style="margin-bottom: 2rem;">
+  <form method="GET" action="/failed-logins" id="thresholdForm">
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1.5rem;">
+      <div style="flex: 1; min-width: 280px;">
+        <label class="form-label" for="thresholdSlider">
+          Configurable Failure Alert Threshold (Current: <span id="thresholdDisplay" style="color: var(--cyan-glow); font-weight: 700;">{{ threshold }}</span> Failures)
+        </label>
+        <div class="slider-container">
+          <input type="range" class="range-slider" id="thresholdSlider" name="threshold" min="1" max="10" value="{{ threshold }}" oninput="document.getElementById('thresholdDisplay').innerText = this.value; document.getElementById('sliderValBox').innerText = this.value;">
+          <div class="slider-val-box" id="sliderValBox">{{ threshold }}</div>
+        </div>
+        <p style="font-size: 0.78rem; color: var(--text-dim); margin-top: 0.35rem;">
+          Accounts and IPs with failures greater than or equal to this threshold trigger active defense alerts.
+        </p>
+      </div>
+      <div>
+        <button type="submit" class="btn btn-cyan btn-sm">
+          Apply Threshold
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<!-- Stat Overview Cards -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon-wrapper stat-icon-red">
+      <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+    </div>
+    <div class="stat-content">
+      <div class="stat-label">Total Unsuccessful Logins</div>
+      <div class="stat-value" style="color: #f87171;">{{ failed_data.total_failed_logins }}</div>
+      <div class="stat-subtext">Across all accounts & IP addresses</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon-wrapper stat-icon-amber">
+      <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/></svg>
+    </div>
+    <div class="stat-content">
+      <div class="stat-label">Flagged Accounts</div>
+      <div class="stat-value" style="color: #fbbf24;">{{ failed_data.flagged_accounts_count }}</div>
+      <div class="stat-subtext">Exceeding {{ threshold }} failure attempts</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon-wrapper stat-icon-purple">
+      <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+    </div>
+    <div class="stat-content">
+      <div class="stat-label">Suspicious Source IPs</div>
+      <div class="stat-value" style="color: #c084fc;">{{ failed_data.flagged_ips_count }}</div>
+      <div class="stat-subtext">Originating >= {{ threshold }} failure requests</div>
+    </div>
+  </div>
+</div>
+
+<!-- Section 1: Accounts With Repeated Failures -->
+<div class="cyber-card" style="margin-bottom: 2rem;">
+  <div class="card-header-row">
+    <div>
+      <h3 class="card-title">
+        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" color="var(--red-danger)"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+        Targeted Accounts & Repeated Failure Analysis
+      </h3>
+      <p style="font-size: 0.82rem; color: var(--text-dim); margin-top: 0.2rem;">
+        Accounts sorted by failure frequency. Highlighted rows represent alert triggers exceeding threshold ({{ threshold }}).
+      </p>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="cyber-table">
+      <thead>
+        <tr>
+          <th>Target Username</th>
+          <th>Failed Logins</th>
+          <th>Successful</th>
+          <th>Failure Rate</th>
+          <th>Alert Status</th>
+          <th>Threat Classification</th>
+          <th>Originating IP(s)</th>
+          <th>Last Seen Failure</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in failed_data.user_analysis %}
+        <tr style="{% if u.exceeds_threshold %}background: rgba(239, 68, 68, 0.05);{% endif %}">
+          <td style="font-weight: 700; color: #fff;">
+            {{ u.username }}
+            {% if u.exceeds_threshold %}
+              <span class="badge badge-danger" style="margin-left: 0.5rem; font-size: 0.68rem;">ALERT</span>
+            {% endif %}
+          </td>
+          <td style="font-weight: 700; color: {% if u.exceeds_threshold %}#f87171{% else %}var(--text-main){% endif %}; font-size: 1.05rem;">
+            {{ u.failed_count }}
+          </td>
+          <td style="color: #34d399;">{{ u.success_count }}</td>
+          <td>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <span>{{ u.failure_rate_pct }}%</span>
+              <div style="width: 50px; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
+                <div style="width: {{ u.failure_rate_pct }}%; height: 100%; background: {% if u.failure_rate_pct > 75 %}#ef4444{% elif u.failure_rate_pct > 40 %}#f59e0b{% else %}#10b981{% endif %};"></div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <span class="badge {% if u.severity == 'CRITICAL' %}badge-danger{% elif u.severity == 'HIGH' %}badge-warning{% elif u.severity == 'MEDIUM' %}badge-info{% else %}badge-gray{% endif %}">
+              {{ u.severity }}
+            </span>
+          </td>
+          <td style="font-size: 0.82rem; color: var(--text-muted);">{{ u.risk_label }}</td>
+          <td class="code-font" style="font-size: 0.8rem; color: var(--cyan-glow);">
+            {{ u.source_ips | join(', ') }}
+          </td>
+          <td class="code-font" style="font-size: 0.8rem; color: var(--text-dim);">{{ u.last_seen }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Section 2: Suspicious Activity by Source IP -->
+<div class="cyber-card">
+  <div class="card-header-row">
+    <div>
+      <h3 class="card-title">
+        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" color="var(--cyan-glow)"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        Source IP Origin Analysis & Credential Spraying Detection
+      </h3>
+      <p style="font-size: 0.82rem; color: var(--text-dim); margin-top: 0.2rem;">
+        Identifies single-source brute-force origins and horizontal credential spraying across multiple distinct accounts.
+      </p>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="cyber-table">
+      <thead>
+        <tr>
+          <th>Source IP Address</th>
+          <th>Failed Attempts</th>
+          <th>Targeted Accounts Count</th>
+          <th>Severity</th>
+          <th>Threat Behavior Classification</th>
+          <th>Targeted Usernames</th>
+          <th>Last Seen Activity</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ip in failed_data.ip_analysis %}
+        <tr style="{% if ip.exceeds_threshold %}background: rgba(6, 182, 212, 0.05);{% endif %}">
+          <td class="code-font" style="font-weight: 700; color: #fff;">
+            {{ ip.source_ip }}
+            {% if ip.targeted_users_count >= 3 %}
+              <span class="badge badge-purple" style="font-size: 0.65rem; margin-left: 0.4rem;">SPRAY BOT</span>
+            {% endif %}
+          </td>
+          <td style="font-weight: 700; color: #f87171;">{{ ip.failed_count }}</td>
+          <td>
+            <span class="badge {% if ip.targeted_users_count >= 3 %}badge-danger{% else %}badge-gray{% endif %}">
+              {{ ip.targeted_users_count }} Accounts
+            </span>
+          </td>
+          <td>
+            <span class="badge {% if ip.severity == 'CRITICAL' %}badge-danger{% elif ip.severity == 'HIGH' %}badge-warning{% elif ip.severity == 'MEDIUM' %}badge-info{% else %}badge-gray{% endif %}">
+              {{ ip.severity }}
+            </span>
+          </td>
+          <td style="font-size: 0.82rem; color: var(--text-muted);">{{ ip.threat_type }}</td>
+          <td style="font-size: 0.82rem; color: var(--cyan-glow); max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+            {{ ip.targeted_users | join(', ') }}
+          </td>
+          <td class="code-font" style="font-size: 0.8rem; color: var(--text-dim);">{{ ip.last_seen }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

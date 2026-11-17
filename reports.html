@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}Security Reports{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">
+      <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="2" fill="none" color="var(--cyan-glow)">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <path d="M14 2v6h6"/>
+        <path d="M16 13H8"/>
+        <path d="M16 17H8"/>
+        <path d="M10 9H8"/>
+      </svg>
+      Defensive Security Audit Reports
+    </h1>
+    <p class="page-description">Automated threat posture computation, executive summaries, actionable mitigations, and multi-format exports.</p>
+  </div>
+  <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+    <a href="/api/download/report/json" class="btn btn-secondary btn-sm" download="security_report.json">
+      <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+      Export JSON
+    </a>
+    <a href="/api/download/report/csv" class="btn btn-secondary btn-sm" download="security_audit.csv">
+      <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+      Export CSV
+    </a>
+    <a href="/api/download/report/text" class="btn btn-cyan btn-sm" download="security_executive_report.txt">
+      <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+      Download Text Report
+    </a>
+  </div>
+</div>
+
+<!-- Threat Level & Risk Gauge Card -->
+<div class="risk-meter-wrapper">
+  <div class="risk-score-circle {% if threat.level == 'CRITICAL' %}risk-circle-critical{% elif threat.level == 'HIGH' %}risk-circle-high{% elif threat.level == 'MEDIUM' %}risk-circle-medium{% else %}risk-circle-low{% endif %}">
+    <span style="font-size: 2.2rem; line-height: 1;">{{ threat.score }}</span>
+    <span style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em;">Risk Index</span>
+  </div>
+  <div style="flex: 1;">
+    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+      <h2 style="font-size: 1.35rem; font-weight: 700; color: #fff;">Overall Threat Assessment:</h2>
+      <span class="badge {% if threat.level == 'CRITICAL' %}badge-danger{% elif threat.level == 'HIGH' %}badge-warning{% elif threat.level == 'MEDIUM' %}badge-info{% else %}badge-success{% endif %}" style="font-size: 0.95rem; padding: 0.35rem 0.85rem;">
+        {{ threat.level }}
+      </span>
+    </div>
+    <p style="font-size: 0.92rem; color: var(--text-muted); line-height: 1.6;">
+      {{ threat.assessment }}
+    </p>
+    <div style="display: flex; gap: 2rem; margin-top: 1rem; font-size: 0.84rem; color: var(--text-dim); flex-wrap: wrap;">
+      <span>Target: <strong style="color: var(--cyan-glow); font-family: monospace;">{{ current_filename }}</strong></span>
+      <span>Timestamp: <strong style="color: #fff;">{{ report_metadata.generated_at }}</strong></span>
+      <span>Engine: <strong style="color: #fff;">BUILDERS Phase 2 Defensive Analyzer</strong></span>
+    </div>
+  </div>
+</div>
+
+<!-- Actionable Defensive Recommendations -->
+<div class="cyber-card" style="margin-bottom: 2rem;">
+  <div class="card-header-row">
+    <h3 class="card-title">
+      <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" color="var(--green-success)"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      Synthesized Defensive Recommendations
+    </h3>
+    <span class="badge badge-success">{{ recommendations | length }} Actions</span>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 1rem;">
+    {% for rec in recommendations %}
+    <div style="background: rgba(0, 0, 0, 0.25); border-left: 3px solid {% if rec.severity == 'CRITICAL' %}var(--red-danger){% elif rec.severity == 'HIGH' %}var(--amber-warning){% else %}var(--blue-info){% endif %}; padding: 1rem 1.25rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); border-left-width: 3px;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.4rem;">
+        <span style="font-weight: 700; color: #fff; font-size: 0.95rem;">{{ rec.title }}</span>
+        <div style="display: flex; gap: 0.5rem;">
+          <span class="badge badge-gray" style="font-size: 0.7rem;">{{ rec.category }}</span>
+          <span class="badge {% if rec.severity == 'CRITICAL' %}badge-danger{% elif rec.severity == 'HIGH' %}badge-warning{% else %}badge-info{% endif %}" style="font-size: 0.7rem;">
+            {{ rec.severity }}
+          </span>
+        </div>
+      </div>
+      <p style="font-size: 0.86rem; color: var(--text-muted); line-height: 1.5;">
+        {{ rec.action }}
+      </p>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Executive Report Text Preview -->
+<div class="cyber-card">
+  <div class="card-header-row">
+    <h3 class="card-title">
+      <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" color="var(--cyan-glow)"><polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/></svg>
+      Formatted Audit Report Preview
+    </h3>
+    <button class="btn btn-secondary btn-sm" onclick="navigator.clipboard.writeText(document.getElementById('reportPreviewText').innerText); showToast('Report copied to clipboard', 'success');">
+      Copy to Clipboard
+    </button>
+  </div>
+  <pre id="reportPreviewText" style="background: #060911; border: 1px solid var(--border-subtle); padding: 1.5rem; border-radius: var(--radius-sm); color: #a5f3fc; font-family: ui-monospace, monospace; font-size: 0.82rem; line-height: 1.6; overflow-x: auto; max-height: 480px;">{{ report_text }}</pre>
+</div>
+{% endblock %}

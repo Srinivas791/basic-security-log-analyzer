@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block title %}Burst Detection{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">
+      <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="2" fill="none" color="var(--amber-warning)">
+        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+      </svg>
+      Authentication Velocity & Burst Detection
+    </h1>
+    <p class="page-description">Identifies automated script attacks, brute-force surges, and credential stuffing bursts inside sliding time windows.</p>
+  </div>
+</div>
+
+<!-- Configuration Form Card -->
+<div class="cyber-card" style="margin-bottom: 2rem;">
+  <form method="GET" action="/bursts">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) auto; gap: 1.5rem; align-items: flex-end;">
+      <!-- Burst Threshold -->
+      <div>
+        <label class="form-label">
+          Burst Event Threshold (Current: <span id="burstThresholdDisplay" style="color: var(--cyan-glow); font-weight: 700;">{{ burst_threshold }}</span> Attempts)
+        </label>
+        <div class="slider-container">
+          <input type="range" class="range-slider" name="burst_threshold" min="3" max="10" value="{{ burst_threshold }}" oninput="document.getElementById('burstThresholdDisplay').innerText = this.value; document.getElementById('bThresholdValBox').innerText = this.value;">
+          <div class="slider-val-box" id="bThresholdValBox">{{ burst_threshold }}</div>
+        </div>
+        <p style="font-size: 0.78rem; color: var(--text-dim); margin-top: 0.35rem;">Minimum failures required inside window</p>
+      </div>
+
+      <!-- Time Window -->
+      <div>
+        <label class="form-label">
+          Sliding Time Window (Current: <span id="windowDisplay" style="color: var(--cyan-glow); font-weight: 700;">{{ window_seconds }}</span> Seconds)
+        </label>
+        <div class="slider-container">
+          <input type="range" class="range-slider" name="window_seconds" min="10" max="300" step="5" value="{{ window_seconds }}" oninput="document.getElementById('windowDisplay').innerText = this.value; document.getElementById('windowValBox').innerText = this.value + 's';">
+          <div class="slider-val-box" id="windowValBox" style="min-width: 58px;">{{ window_seconds }}s</div>
+        </div>
+        <p style="font-size: 0.78rem; color: var(--text-dim); margin-top: 0.35rem;">Observation window span for velocity spikes</p>
+      </div>
+
+      <div>
+        <button type="submit" class="btn btn-cyan btn-sm" style="height: 42px; padding: 0 1.5rem;">
+          Recalculate Bursts
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<!-- Metrics Cards -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon-wrapper stat-icon-amber">
+      <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+    </div>
+    <div class="stat-content">
+      <div class="stat-label">Detected Bursts</div>
+      <div class="stat-value" style="color: #fbbf24;">{{ burst_data.total_burst_incidents }}</div>
+      <div class="stat-subtext">{{ burst_data.critical_bursts }} Critical | {{ burst_data.high_bursts }} High</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon-wrapper stat-icon-red">
+      <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    </div>
+    <div class="stat-content">
+      <div class="stat-label">Max Burst Size</div>
+      <div class="stat-value" style="color: #f87171;">{{ burst_data.max_burst_size }}</div>
+      <div class="stat-subtext">Events in single incident cluster</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon-wrapper stat-icon-cyan">
+      <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    </div>
+    <div class="stat-content">
+      <div class="stat-label">Peak Velocity</div>
+      <div class="stat-value">{{ burst_data.peak_burst_rate_per_min }}</div>
+      <div class="stat-subtext">Attempts per minute peak</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon-wrapper stat-icon-purple">
+      <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+    </div>
+    <div class="stat-content">
+      <div class="stat-label">Target Accounts</div>
+      <div class="stat-value" style="color: #c084fc;">{{ burst_data.affected_accounts_in_bursts | length }}</div>
+      <div class="stat-subtext">Compromise attempts under burst</div>
+    </div>
+  </div>
+</div>
+
+<!-- Burst Incidents Listing -->
+<div class="cyber-card">
+  <div class="card-header-row">
+    <div>
+      <h3 class="card-title">
+        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" color="var(--amber-warning)"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        Identified Velocity Spike Incidents
+      </h3>
+      <p style="font-size: 0.82rem; color: var(--text-dim); margin-top: 0.2rem;">
+        Sliding-window clusters meeting criteria (>= {{ burst_threshold }} failures within {{ window_seconds }} seconds).
+      </p>
+    </div>
+  </div>
+
+  {% if burst_data.burst_incidents %}
+  <div class="table-responsive">
+    <table class="cyber-table">
+      <thead>
+        <tr>
+          <th>Incident ID</th>
+          <th>Pattern Classification</th>
+          <th>Severity</th>
+          <th>Target Account(s)</th>
+          <th>Source IP(s)</th>
+          <th>Start Time</th>
+          <th>End Time</th>
+          <th>Duration</th>
+          <th>Event Count</th>
+          <th>Velocity Rate</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for b in burst_data.burst_incidents %}
+        <tr style="border-left: 3px solid {% if b.severity == 'CRITICAL' %}var(--red-danger){% elif b.severity == 'HIGH' %}var(--amber-warning){% else %}var(--blue-info){% endif %};">
+          <td class="code-font" style="font-weight: 700; color: #fff;">{{ b.incident_id }}</td>
+          <td>
+            <span style="font-weight: 600; color: #fff;">{{ b.pattern_type }}</span>
+          </td>
+          <td>
+            <span class="badge {% if b.severity == 'CRITICAL' %}badge-danger{% elif b.severity == 'HIGH' %}badge-warning{% else %}badge-info{% endif %}">
+              {{ b.severity }}
+            </span>
+          </td>
+          <td style="color: var(--cyan-glow); font-weight: 600;">{{ b.target_username }}</td>
+          <td class="code-font">{{ b.source_ip }}</td>
+          <td class="code-font" style="font-size: 0.8rem; color: var(--text-muted);">{{ b.start_time }}</td>
+          <td class="code-font" style="font-size: 0.8rem; color: var(--text-muted);">{{ b.end_time }}</td>
+          <td class="code-font" style="font-weight: 600;">{{ b.duration_seconds }}s</td>
+          <td style="font-weight: 700; color: #f87171; font-size: 1.05rem;">{{ b.event_count }}</td>
+          <td style="color: #fbbf24; font-weight: 600;">{{ b.rate_per_minute }}/min</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div style="text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
+    <svg viewBox="0 0 24 24" width="48" height="48" stroke="currentColor" stroke-width="1.5" fill="none" style="margin: 0 auto 1rem; color: var(--green-success);">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+      <polyline points="9 12 11 14 15 10"/>
+    </svg>
+    <h4 style="font-size: 1.1rem; color: #fff; margin-bottom: 0.5rem;">No Authentication Bursts Detected</h4>
+    <p style="font-size: 0.88rem; max-width: 500px; margin: 0 auto;">
+      No authentication sequences exceeded {{ burst_threshold }} failed attempts within a {{ window_seconds }}-second window. Try adjusting the thresholds above to broaden the detection sensitivity.
+    </p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

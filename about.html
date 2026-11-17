@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block title %}About Project{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">
+      <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="2" fill="none" color="var(--cyan-glow)">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M12 16v-4"/>
+        <path d="M12 8h.01"/>
+      </svg>
+      About the Security Log Analyzer Project
+    </h1>
+    <p class="page-description">BUILDERS Phase 2 - Defensive cybersecurity architecture, ethical constraints, and MITRE ATT&CK alignment.</p>
+  </div>
+</div>
+
+<!-- Architecture & Domain Overview -->
+<div class="cyber-card" style="margin-bottom: 2rem;">
+  <div class="card-header-row">
+    <h2 class="card-title">
+      <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" color="var(--cyan-glow)"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+      1. Project Objective & Domain Overview
+    </h2>
+    <span class="badge badge-info">Cybersecurity / Defensive Security</span>
+  </div>
+  <p style="font-size: 0.92rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 1rem;">
+    The <strong>Basic Security Log Analyzer</strong> is a specialized defensive cybersecurity application engineered to ingest fictional and sanctioned public authentication streams, detect malicious login patterns, identify targeted brute-force attacks, and isolate unusual velocity bursts inside sliding temporal windows.
+  </p>
+  <p style="font-size: 0.92rem; color: var(--text-muted); line-height: 1.6;">
+    Operating entirely within the defensive security paradigm, the system surfaces threat intelligence without disrupting operational services, enabling Security Operations Center (SOC) analysts to swiftly prioritize incident response, configure edge perimeter rate limits, and enforce identity governance.
+  </p>
+</div>
+
+<!-- Defensive Security Compliance & Ethical Safeguards -->
+<div class="cyber-card" style="margin-bottom: 2rem; border-left: 4px solid var(--green-success);">
+  <div class="card-header-row">
+    <h2 class="card-title">
+      <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" color="var(--green-success)"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      2. Defensive Security Requirements & Ethical Safeguards
+    </h2>
+    <span class="badge badge-success">Strict Compliance</span>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem;">
+    <div style="background: rgba(0, 0, 0, 0.25); padding: 1.25rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+      <h3 style="font-size: 0.95rem; font-weight: 700; color: #34d399; margin-bottom: 0.4rem;">Zero Credential Harvesting</h3>
+      <p style="font-size: 0.85rem; color: var(--text-muted);">
+        The analyzer strictly parses usernames, timestamps, statuses, and network source IPs. Real passwords or secret hashes are never requested, inspected, or persisted.
+      </p>
+    </div>
+
+    <div style="background: rgba(0, 0, 0, 0.25); padding: 1.25rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+      <h3 style="font-size: 0.95rem; font-weight: 700; color: #34d399; margin-bottom: 0.4rem;">RFC 5737 Compliant Fictional IPs</h3>
+      <p style="font-size: 0.85rem; color: var(--text-muted);">
+        All sample logs utilize sanctioned RFC 5737 documentation ranges (192.0.2.0/24, 198.51.100.0/24, 203.0.113.0/24) and RFC 1918 private subnets, ensuring no real-world entities are targeted.
+      </p>
+    </div>
+
+    <div style="background: rgba(0, 0, 0, 0.25); padding: 1.25rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+      <h3 style="font-size: 0.95rem; font-weight: 700; color: #34d399; margin-bottom: 0.4rem;">Non-Disruptive Observability</h3>
+      <p style="font-size: 0.85rem; color: var(--text-muted);">
+        The system does not lock accounts or mutate directory infrastructure automatically, functioning strictly as an audit, forensic, and decision-support tool for defensive teams.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- MITRE ATT&CK Mapping -->
+<div class="cyber-card" style="margin-bottom: 2rem;">
+  <div class="card-header-row">
+    <h2 class="card-title">
+      <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" color="var(--amber-warning)"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      3. MITRE ATT&CK Framework Mapping
+    </h2>
+    <span class="badge badge-warning">Tactics & Techniques</span>
+  </div>
+
+  <div class="table-responsive">
+    <table class="cyber-table">
+      <thead>
+        <tr>
+          <th>Technique ID</th>
+          <th>Technique Name</th>
+          <th>Observed Attack Pattern</th>
+          <th>Defensive Detection Mechanism</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="code-font" style="color: var(--cyan-glow); font-weight: 700;">T1110.001</td>
+          <td style="font-weight: 600; color: #fff;">Password Guessing / Brute Force</td>
+          <td style="color: var(--text-muted);">Consecutive failure sequences targeting privileged accounts ('admin', 'root').</td>
+          <td>Configurable threshold accumulator tracking failures by username in <span class="code-font">failed_login.py</span>.</td>
+        </tr>
+        <tr>
+          <td class="code-font" style="color: var(--cyan-glow); font-weight: 700;">T1110.003</td>
+          <td style="font-weight: 600; color: #fff;">Password Spraying</td>
+          <td style="color: var(--text-muted);">Single origin IP attempting logins across multiple distinct usernames in rapid sequence.</td>
+          <td>Multi-target cardinality detection per IP address flagging "SPRAY BOT" indicators.</td>
+        </tr>
+        <tr>
+          <td class="code-font" style="color: var(--cyan-glow); font-weight: 700;">T1110.004</td>
+          <td style="font-weight: 600; color: #fff;">Credential Stuffing Velocity</td>
+          <td style="color: var(--text-muted);">Automated bot suites generating high-frequency authentication bursts (> 5 attempts / 30s).</td>
+          <td>Sliding window temporal clustering algorithm implemented in <span class="code-font">burst_detector.py</span>.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modular Architecture -->
+<div class="cyber-card">
+  <div class="card-header-row">
+    <h2 class="card-title">
+      <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" color="var(--purple-accent)"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+      4. System Architecture & Modular Composition
+    </h2>
+    <span class="badge badge-purple">Python Modular Engine</span>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem;">
+    <div style="background: rgba(0, 0, 0, 0.2); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+      <div class="code-font" style="color: var(--cyan-glow); font-weight: 700; margin-bottom: 0.35rem;">main.py</div>
+      <p style="font-size: 0.82rem; color: var(--text-muted);">
+        Flask server routing, session dataset management, REST API endpoints, and template rendering integration.
+      </p>
+    </div>
+
+    <div style="background: rgba(0, 0, 0, 0.2); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+      <div class="code-font" style="color: #34d399; font-weight: 700; margin-bottom: 0.35rem;">log_parser.py</div>
+      <p style="font-size: 0.82rem; color: var(--text-muted);">
+        Resilient ingestion of .txt and .csv files, multi-pattern regex timestamp extraction, and fault-tolerant separation of malformed rows.
+      </p>
+    </div>
+
+    <div style="background: rgba(0, 0, 0, 0.2); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+      <div class="code-font" style="color: #f87171; font-weight: 700; margin-bottom: 0.35rem;">failed_login.py</div>
+      <p style="font-size: 0.82rem; color: var(--text-muted);">
+        Aggregation of unsuccessful logins by username and IP, dynamic threshold filtering, and severity grading.
+      </p>
+    </div>
+
+    <div style="background: rgba(0, 0, 0, 0.2); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+      <div class="code-font" style="color: #fbbf24; font-weight: 700; margin-bottom: 0.35rem;">burst_detector.py</div>
+      <p style="font-size: 0.82rem; color: var(--text-muted);">
+        Sliding-window temporal analyzer detecting anomalous surges, calculating velocity per minute, and clustering burst spans.
+      </p>
+    </div>
+
+    <div style="background: rgba(0, 0, 0, 0.2); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+      <div class="code-font" style="color: #c084fc; font-weight: 700; margin-bottom: 0.35rem;">report_and_tests.py</div>
+      <p style="font-size: 0.82rem; color: var(--text-muted);">
+        Multi-format security audit generator (JSON/CSV/Text), posture calculation, and 5 automated verification test cases.
+      </p>
+    </div>
+
+    <div style="background: rgba(0, 0, 0, 0.2); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+      <div class="code-font" style="color: #38bdf8; font-weight: 700; margin-bottom: 0.35rem;">sample_logs.txt / .csv</div>
+      <p style="font-size: 0.82rem; color: var(--text-muted);">
+        Fictional authentication records featuring benign logins, targeted brute-force attacks, bursts, and malformed records.
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}

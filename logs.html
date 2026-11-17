@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Log Analysis{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">
+      <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="2" fill="none" color="var(--cyan-glow)">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="16" x2="8" y1="13" y2="13"/>
+        <line x1="16" x2="8" y1="17" y2="17"/>
+      </svg>
+      Authentication Log Analysis
+    </h1>
+    <p class="page-description">Deep inspection, search filtering, and forensic exploration of valid authentication events.</p>
+  </div>
+  <div>
+    <span class="badge badge-info" id="filteredCountBadge" style="font-size: 0.85rem; padding: 0.4rem 0.8rem;">
+      Showing {{ valid_records | length }} records
+    </span>
+  </div>
+</div>
+
+<!-- Filter Toolbar -->
+<div class="filter-toolbar">
+  <div style="flex: 2; min-width: 240px;">
+    <input type="text" id="logSearchInput" class="form-control" placeholder="Search by username, IP, date, service..." oninput="filterLogsTable()">
+  </div>
+  <div style="flex: 1; min-width: 160px;">
+    <select id="statusFilterSelect" class="form-control" onchange="filterLogsTable()">
+      <option value="ALL">All Statuses</option>
+      <option value="SUCCESS">Only SUCCESS</option>
+      <option value="FAILED">Only FAILED</option>
+    </select>
+  </div>
+  <div style="flex: 1; min-width: 160px;">
+    <select id="serviceFilterSelect" class="form-control" onchange="filterLogsTable()">
+      <option value="ALL">All Services</option>
+      <option value="SSH">SSH</option>
+      <option value="WEB-PORTAL">Web-Portal</option>
+      <option value="VPN">VPN</option>
+      <option value="API">API</option>
+      <option value="AUTH">AUTH</option>
+    </select>
+  </div>
+  <div>
+    <button class="btn btn-secondary btn-sm" onclick="resetFilters()">Reset Filters</button>
+  </div>
+</div>
+
+<!-- Log Records Data Table -->
+<div class="cyber-card">
+  <div class="table-responsive">
+    <table class="cyber-table" id="logsTable">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Timestamp</th>
+          <th>Username</th>
+          <th>Login Status</th>
+          <th>Source IP</th>
+          <th>Service</th>
+          <th>Raw Authentication Record</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in valid_records %}
+        <tr data-status="{{ r.status }}" data-service="{{ r.service.upper() }}">
+          <td class="code-font" style="color: var(--text-dim);">#{{ r.id }}</td>
+          <td class="code-font" style="white-space: nowrap;">{{ r.timestamp_str }}</td>
+          <td>
+            <span style="font-weight: 600; color: #fff;">{{ r.username }}</span>
+          </td>
+          <td>
+            {% if r.status == 'SUCCESS' %}
+              <span class="badge badge-success">SUCCESS</span>
+            {% else %}
+              <span class="badge badge-danger">FAILED</span>
+            {% endif %}
+          </td>
+          <td class="code-font" style="color: var(--cyan-glow);">{{ r.source_ip }}</td>
+          <td><span class="badge badge-gray">{{ r.service }}</span></td>
+          <td class="code-font" style="color: var(--text-muted); font-size: 0.78rem;">
+            {{ r.raw }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function resetFilters() {
+    document.getElementById('logSearchInput').value = '';
+    document.getElementById('statusFilterSelect').value = 'ALL';
+    document.getElementById('serviceFilterSelect').value = 'ALL';
+    filterLogsTable();
+  }
+</script>
+{% endblock %}
